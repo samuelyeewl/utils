@@ -20,3 +20,8 @@ have a counterpart with ext2, optionally printing names.
 Usage:
 `xorext [dir1] ext1 [dir2] ext2 [-g glob] [-p num]`
 
+
+duext
+-----
+Outputs the disk usage in a given directory, broken down by subdirectories and file types.
+

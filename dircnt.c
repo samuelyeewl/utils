@@ -12,12 +12,14 @@ void usage(char* prog) {
     fprintf(stderr, "Usage:\n\
         %s dir\n\
         -n: Numeric output only\n\
+        -x: Don't print number of files\n\
         -h: Don't count hidden files\n\
-        -d: Don't count directories\n\
+        -d: Count directories\n\
         -e: Only find files with the given extension\n\
         -s: Only find files with the given start\n\
         -g: Find files matching the given pattern (incompatible with -e and -s)\n\
         -p: Print n file names. If n <= 0, prints all.\n\
+        -f: Print full path to filenames.\n\
         Note: Using any of these options apart from -n disables fast mode.\n", prog);
     return;
 }
@@ -26,7 +28,7 @@ int main(int argc, char* argv[]) {
     // Argument parsing
     int c;
     bool hidden = true;
-    bool ld = true;
+    bool ld = false;
     // Extensions
     bool find_ext = false;
     char *ext = NULL;
@@ -40,10 +42,12 @@ int main(int argc, char* argv[]) {
     char *globs = NULL;
     // Printing
     bool num_output = false;
+    bool no_output = false;
     bool print_names = false;
+    bool print_full_names = false;
     int num_print = INT_MAX;
 
-    while ((c = getopt(argc, argv, "nhde:s:g:p:")) != -1) {
+    while ((c = getopt(argc, argv, "nhdfxe:s:g:p:")) != -1) {
         switch(c) {
             case 'n':
                 num_output = true;
@@ -52,12 +56,18 @@ int main(int argc, char* argv[]) {
                 hidden = false;
                 break;
             case 'd':
-                ld = false;
+                ld = true;
                 break;
             case 'e':
                 find_ext = true;
                 ext = optarg;
                 len_ext = strlen(ext);
+                break;
+            case 'f':
+                print_full_names = true;
+                break;
+            case 'x':
+                no_output = true;
                 break;
             case 's':
                 find_head = true;
@@ -139,8 +149,12 @@ int main(int argc, char* argv[]) {
                 if (len_name < len_head ||
                         strncmp(ent->d_name, head, len_head) != 0)
                     continue;
-            if (print_names && count < num_print)
-                printf("%s\n", ent->d_name);
+            if (print_names && count < num_print) {
+                if (print_full_names)
+                    printf("%s/%s\n", argv[optind], ent->d_name);
+                else
+                    printf("%s\n", ent->d_name);
+            }
             ++count;
         }
     }
@@ -148,6 +162,7 @@ int main(int argc, char* argv[]) {
     closedir(dir);
 
     if (num_output) printf("%ld\n", count);
+    else if (no_output) return 0;
     else {
         printf("%s contains %ld ", argv[optind], count);
         if (!hidden)   printf("non-hidden ");
